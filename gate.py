@@ -1,6 +1,13 @@
 import numpy as np
 from activation import Sigmoid
 
+def zero_grad(W,U,b,dW,dU,db):
+    dW = np.zeros_like(W)  
+    dU = np.zeros_like(U)  
+    db = np.zeros_like(b) 
+    cache = None 
+    return W,U,b,cache
+
 class MulGate:
     def forward(self, W, x):
         """
@@ -29,6 +36,7 @@ class MulGate:
         """
         grad__W=np.dot(grad_output, np.transpose(x))
         grad_x = np.dot(np.transpose(W), grad_output)
+        return grad__W,grad_x
 class AddGate:
     def forward(self, x, y):
         """
@@ -57,7 +65,7 @@ class AddGate:
         """
         grad_x = grad_output
         grad_y = grad_output
-
+        return grad_x, grad_y
 
 class ForgetGate:  # LSTM   
     def __init__(self):
@@ -120,6 +128,9 @@ class ForgetGate:  # LSTM
         dh_prev = np.dot(dsigma, self.Wf[:, x.shape[1]:])
         
         return dx, dh_prev, dWf, dUf, dbf
+
+    def zero_grad(self):
+        zero_grad(self.Wf,self.Uf,self.bf,self.dWf,self.dUf,self.dbf)
 class InputGate:  # LSTM
     def __init__(self):
         self.Wi = None  
@@ -181,6 +192,8 @@ class InputGate:  # LSTM
         dh_prev = np.dot(dsigma, self.Ui)
         
         return dx, dh_prev, dWi, dUi, dbi
+    def zero_grad(self):
+        zero_grad(self.Wi,self.Ui,self.bi,self.dWi,self.dUi,self.dbi)
 
 class OutputGate:  # LSTM
     def __init__(self):
@@ -243,6 +256,8 @@ class OutputGate:  # LSTM
         dh_prev = np.dot(dsigma, self.Uo)
         
         return dx, dh_prev, dWo, dUo, dbo
+    def zero_grad(self):
+        zero_grad(self.Wo,self.Uo,self.bo,self.dWo,self.dUo,self.dbo)
 
 class CandidateGate:  # LSTM
     def __init__(self):
@@ -307,7 +322,8 @@ class CandidateGate:  # LSTM
         dh_prev = np.dot(dtanh, self.Uc)
         
         return dx, dh_prev, dWc, dUc, dbc
-
+    def zero_grad(self):
+        zero_grad(self.Wc,self.Uc,self.bc,self.dWc,self.dUc,self.dbc)
 
 class UpdateGate:  # GRU
     def __init__(self):
@@ -368,6 +384,8 @@ class UpdateGate:  # GRU
         dh_prev = np.dot(dsigma, self.Uz)
         
         return dx, dh_prev, dWz, dUz, dbz
+    def zero_grad(self):
+        zero_grad(self.Wz,self.Uz,self.bz,self.dWz,self.dUz,self.dbz)
 class ResetGate:  # GRU
     def __init__(self):
         self.Wr = None  
@@ -427,3 +445,5 @@ class ResetGate:  # GRU
         dh_prev = np.dot(dsigma, self.Ur)
         
         return dx, dh_prev, dWr, dUr, dbr
+    def zero_grad(self):
+        zero_grad(self.Wr,self.Ur,self.br,self.dWr,self.dUr,self.dbr)

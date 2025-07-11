@@ -23,4 +23,26 @@ class LSTM:
         self.output_gate.zero_grad()
 
     def forward(self, x, h_prev, c_prev):
-        pass
+        """
+        Forward pass for LSTM cell.
+
+        Args:
+            x: Input at current timestep (batch_size, input_size)
+            h_prev: Previous hidden state (batch_size, hidden_size)
+            c_prev: Previous cell state (batch_size, hidden_size)
+
+        Returns:
+            h: Hidden state at current timestep (batch_size, hidden_size)
+            c: Cell state at current timestep (batch_size, hidden_size)
+            y: Output at current timestep (batch_size, output_size)
+        """
+        f = self.forget_gate.forward(x, h_prev, c_prev)
+        i = self.input_gate.forward(x, h_prev, c_prev)
+        c_tilde = self.candidate_gate.forward(x, h_prev, c_prev)
+        o = self.output_gate.forward(x, h_prev, c_prev)
+        c = f * c_prev + i * c_tilde
+        h = o * Tanh.forward(c)
+        y = np.dot(self.Why, h) + self.by
+        return h, c, y
+    def backward(self, dh_next, dy, h_prev, c_prev, x, h, c):
+        

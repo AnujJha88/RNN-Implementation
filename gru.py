@@ -9,4 +9,8 @@ class GRU:
     def zero_grad(self):
         self.forget_gate.zero_grad()
         self.update_gate.zero_grad()
+        self.input=None
+        self.output=None
 
+    def forward(self,x,h_prev,c_prev):
+        pass

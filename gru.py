@@ -14,3 +14,6 @@ class GRU:
 
     def forward(self,x,h_prev,c_prev):
         pass
+
+    def backward(self,dnext_h,dnext_c):
+        pass

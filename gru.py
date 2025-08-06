@@ -36,3 +36,6 @@ class GRU:
             h_seq[t]=h_t
             h_prev=h_t
         return h_seq
+
+    def backward(self,gradients):
+        pass

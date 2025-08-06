@@ -11,6 +11,11 @@ class GRU:
         self.reset_gate=ResetGate()
         self.candidate_gate=CandidateGate()
 
+    def zero_grad(self):
+        self.update_gate.zero_grad()
+        self.reset_gate.zero_grad()
+        self.candidate_gate.zero_grad()
+
     def forward(self,input_seq,h_0):
         seq_len=input_seq.shape[0]
 

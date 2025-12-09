@@ -17,8 +17,11 @@ def preprocess():
         words=sentence.split()
         indexing=[get_idx(vocab,word) for word in words]
         training_data.append((indexing,int(train_data[sentence])))
-    return training_data
-
+    split_idx = int(len(training_data) * 0.8)
+    train_split = training_data[:split_idx]
+    val_split = training_data[split_idx:]
+    
+    return train_split, val_split
 def train_sentence(indices,model,embed_layer,target):
     model.zero_grad()
     embed_layer.zero_grad()
@@ -64,7 +67,7 @@ def train_sentence(indices,model,embed_layer,target):
 
 
 def training(epochs):
-    training_data=preprocess()
+    training_data, validation_data = preprocess()
     model1=LSTM(input_size=50,hidden_size=100,output_size=1)
     model2=GRU(input_size=50,hidden_size=100,output_size=1)
     model3=RNN(input_size=50,hidden_size=100,output_size=1)
@@ -100,10 +103,25 @@ def training(epochs):
         avg_loss = epoch_loss / total_examples
         accuracy = (correct_predictions / total_examples) * 100
 
-        # 5. Print PyTorch-style status
-        print(f'Epoch: {epoch+1:02} | Time: {int(epoch_mins)}m {int(epoch_secs)}s')
-        print(f'\tTrain Loss: {avg_loss:.4f} | Train Acc: {accuracy:.2f}%')
-        time.sleep(0.1)  # Just to make sure the output is readable
+        if (epoch + 1) % 10 == 0:
+                print(f'Epoch: {epoch+1:02} | Time: {int(epoch_mins)}m {int(epoch_secs)}s')
+                print(f'\tTrain Loss: {avg_loss:.4f} | Train Acc: {accuracy:.2f}%')
+                time.sleep(0.1)
+        val_loss = 0
+        val_correct = 0
+        for indices, label in validation_data:
+            # Forward pass ONLY (No backward, no step)
+            h, c, y, _ = train_sentence(indices, model1, embed_layer, label)
+            
+            val_loss += loss.forward(np.array([label]), y)
+            if (1 if y >= 0.5 else 0) == label:
+                val_correct += 1
+                
+        # Calculate Val Stats
+        avg_val_loss = val_loss / len(validation_data)
+        val_acc = (val_correct / len(validation_data)) * 100
+        
+        print(f"Epoch {epoch}: Train Loss {avg_loss:.4f} | Val Loss {avg_val_loss:.4f} | Val Acc {val_acc:.2f}%")
      
 def main():
     training(epochs=100)

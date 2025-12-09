@@ -123,4 +123,4 @@ def build_data_file(num_samples=5000):
 if __name__ == "__main__":
     download_and_extract()
     # Note: Pure NumPy is slow. Start small to test your LSTM.
-    build_data_file(num_samples=2000)
+    build_data_file(num_samples=10000)

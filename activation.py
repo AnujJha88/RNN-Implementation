@@ -7,8 +7,8 @@ class Sigmoid:
 
     @staticmethod
     def backward(x):
-        sig = Sigmoid.forward(x)
-        return sig * (1 - sig)
+       
+        return x*(1-x)
 class Tanh:
     @staticmethod
     def forward(x):

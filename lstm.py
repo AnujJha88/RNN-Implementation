@@ -71,35 +71,49 @@ class LSTM:
 
         dx=dxf+dxi+dxc_tilde+dxo
         dh_prev=dhf+dhi+dhc_tilde+dho
-        self.forget_gate.dWf+=dWf
-        self.input_gate.dWi+=dWi
-        self.output_gate.dWo+=dWo
-        self.forget_gate.dUf+=dUf
-        self.input_gate.dUi+=dUi
-        self.output_gate.dUo+=dUo
-        self.forget_gate.dbf+=dbf
-        self.input_gate.dbi+=dbi
-        self.output_gate.dbo+=dbo
-        self.candidate_gate.dWc+=dWc
-        self.candidate_gate.dUc+=dUc
-        self.candidate_gate.dbc+=dbc
+        self.forget_gate.dWf += dWf
+        self.forget_gate.dUf += dUf
+        self.forget_gate.dbf += dbf
+        
+        self.input_gate.dWi += dWi
+        self.input_gate.dUi += dUi
+        self.input_gate.dbi += dbi
+        
+        self.output_gate.dWo += dWo
+        self.output_gate.dUo += dUo
+        self.output_gate.dbo += dbo
+        
+        self.candidate_gate.dWc += dWc
+        self.candidate_gate.dUc += dUc
+        self.candidate_gate.dbc += dbc
         self.dWhy+=dWhy
         self.dby+=dby
         return dx,dh_prev,dc_prev
     
-    def step(self,learning_rate=0.01):
-        self.input_gate.Wi-=learning_rate*self.input_gate.dWi
-        self.forget_gate.Wf-=learning_rate*self.forget_gate.dWf
-        self.output_gate.Wo-=learning_rate*self.output_gate.dWo
-        self.candidate_gate.Wc-=learning_rate*self.candidate_gate.dWc
-        self.input_gate.Ui-=learning_rate*self.input_gate.dUi
-        self.forget_gate.Uf-=learning_rate*self.forget_gate.dUf
-        self.output_gate.Uo-=learning_rate*self.output_gate.dUo
-        self.candidate_gate.Uc-=learning_rate*self.candidate_gate.dUc
-        self.forget_gate.bf-=learning_rate*self.forget_gate.dbf
-        self.input_gate.bi-=learning_rate*self.input_gate.dbi
-        self.output_gate.bo-=learning_rate*self.output_gate.dbo
-        self.candidate_gate.bc-=learning_rate*self.candidate_gate.dbc
-        self.by-=learning_rate*self.dby
-        self.Why-=learning_rate*self.dWhy
+    def step(self, learning_rate=0.01):
+        # 1. Update Input Gate (Clip gradients between -5 and 5)
+        self.input_gate.Wi -= learning_rate * np.clip(self.input_gate.dWi, -5, 5)
+        self.input_gate.Ui -= learning_rate * np.clip(self.input_gate.dUi, -5, 5)
+        self.input_gate.bi -= learning_rate * np.clip(self.input_gate.dbi, -5, 5)
+
+        # 2. Update Forget Gate
+        self.forget_gate.Wf -= learning_rate * np.clip(self.forget_gate.dWf, -5, 5)
+        self.forget_gate.Uf -= learning_rate * np.clip(self.forget_gate.dUf, -5, 5)
+        self.forget_gate.bf -= learning_rate * np.clip(self.forget_gate.dbf, -5, 5)
+
+        # 3. Update Output Gate
+        self.output_gate.Wo -= learning_rate * np.clip(self.output_gate.dWo, -5, 5)
+        self.output_gate.Uo -= learning_rate * np.clip(self.output_gate.dUo, -5, 5)
+        self.output_gate.bo -= learning_rate * np.clip(self.output_gate.dbo, -5, 5)
+
+        # 4. Update Candidate Gate
+        self.candidate_gate.Wc -= learning_rate * np.clip(self.candidate_gate.dWc, -5, 5)
+        self.candidate_gate.Uc -= learning_rate * np.clip(self.candidate_gate.dUc, -5, 5)
+        self.candidate_gate.bc -= learning_rate * np.clip(self.candidate_gate.dbc, -5, 5)
+
+        # 5. Update Output Layer
+        self.Why -= learning_rate * np.clip(self.dWhy, -5, 5)
+        self.by -= learning_rate * np.clip(self.dby, -5, 5)
+
+        # 6. Clear gradients for the next step
         self.zero_grad()

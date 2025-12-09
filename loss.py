@@ -21,10 +21,10 @@ class MSELoss:
 
 class BCELoss:
     def forward(self, y, y_pred):
-        epsilon = 1e-9
+        epsilon = 1e-15
         y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
         # Binary Cross Entropy requires both terms: y and (1-y)
-        loss = -np.mean(y * np.log(y_pred) + (1 - y) * np.log(1 - y_pred))
+        loss = -np.mean(y * np.log(y_pred) + (1 - y) * np.log(1-y_pred))
         return loss
 
     def backward(self, y, y_pred):

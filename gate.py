@@ -80,7 +80,7 @@ class ForgetGate:  # LSTM
         # Initialize Weights (Xavier)
         self.Wf = np.random.randn(hidden_size, input_size) * np.sqrt(1 / (hidden_size + input_size))
         self.Uf = np.random.randn(hidden_size, hidden_size) * np.sqrt(1 / (hidden_size + hidden_size))
-        self.bf = np.zeros(( 1,hidden_size))
+        self.bf = np.ones(( 1,hidden_size))
         
         # Initialize Gradients
         self.dWf = np.zeros_like(self.Wf)

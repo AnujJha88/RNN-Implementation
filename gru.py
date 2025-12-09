@@ -52,27 +52,40 @@ class GRU:
         self.update_gate.dWz+=dWz
         self.candidate_gate.dWc+=dWc
         self.reset_gate.dWr+=dWr
+
         self.update_gate.dUz+=dUz
         self.candidate_gate.dUc+=dUc    
         self.reset_gate.dUr+=dUr
+
         self.update_gate.dbz+=dbz
         self.candidate_gate.dbc+=dbc    
         self.reset_gate.dbr+=dbr
+        
         self.dWhy+=dWhy
         self.dby+=dby
 
         return dx, dh_prev
   
-    def step(self,learning_rate=0.01):
-        self.update_gate.Wz-=learning_rate*self.update_gate.dWz
-        self.update_gate.Uz-=learning_rate*self.update_gate.dUz
-        self.update_gate.bz-=learning_rate*self.update_gate.dbz
-        self.candidate_gate.Wc-=learning_rate*self.candidate_gate.dWc
-        self.candidate_gate.Uc-=learning_rate*self.candidate_gate.dUc
-        self.candidate_gate.bc-=learning_rate*self.candidate_gate.dbc
-        self.reset_gate.Wr-=learning_rate*self.reset_gate.dWr
-        self.reset_gate.Ur-=learning_rate*self.reset_gate.dUr
-        self.reset_gate.br-=learning_rate*self.reset_gate.dbr
-        self.by-=learning_rate*self.dby
-        self.Why-=learning_rate*self.dWhy
+    def step(self, learning_rate=0.01):
+       
+        # 1. Update Update Gate
+        self.update_gate.Wz -= learning_rate * np.clip(self.update_gate.dWz, -5, 5)
+        self.update_gate.Uz -= learning_rate * np.clip(self.update_gate.dUz, -5, 5)
+        self.update_gate.bz -= learning_rate * np.clip(self.update_gate.dbz, -5, 5)
+
+        # 2. Update Reset Gate
+        self.reset_gate.Wr -= learning_rate * np.clip(self.reset_gate.dWr, -5, 5)
+        self.reset_gate.Ur -= learning_rate * np.clip(self.reset_gate.dUr, -5, 5)
+        self.reset_gate.br -= learning_rate * np.clip(self.reset_gate.dbr, -5, 5)
+
+        # 3. Update Candidate Gate
+        self.candidate_gate.Wc -= learning_rate * np.clip(self.candidate_gate.dWc, -5, 5)
+        self.candidate_gate.Uc -= learning_rate * np.clip(self.candidate_gate.dUc, -5, 5)
+        self.candidate_gate.bc -= learning_rate * np.clip(self.candidate_gate.dbc, -5, 5)
+
+        # 4. Update Output Layer
+        self.Why -= learning_rate * np.clip(self.dWhy, -5, 5)
+        self.by -= learning_rate * np.clip(self.dby, -5, 5)
+
+        # 5. Clear gradients for the next step
         self.zero_grad()

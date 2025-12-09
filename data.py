@@ -59,7 +59,7 @@ train_data = {
   'this was not happy and not good earlier': False,
 }
 
-test_data = {
+val_data = {
   'this is happy': True,
   'i am good': True,
   'this is not happy': False,

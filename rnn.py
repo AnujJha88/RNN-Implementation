@@ -31,10 +31,10 @@ class RNN:
         self.Why = np.random.randn(output_size, hidden_size) * np.sqrt(1 / (hidden_size + output_size))
         
         # Initialize biases to zero
-        self.bh = np.zeros((hidden_size, 1))
-        self.by = np.zeros((output_size, 1))
+        self.bh = np.zeros((1,hidden_size))
+        self.by = np.zeros((1,output_size))
 
-    def forward(self, x, h_prev):
+    def forward(self, x, h_prev,c_prev=None):
         """
         Forward pass of the RNN.
 
@@ -58,9 +58,9 @@ class RNN:
         # Compute output
         y = np.dot(self.Why, h) + self.by
         
-        return h, y
+        return h,None, y,()
 
-    def backward(self, dh_next, dy, h_prev, x, h):
+    def backward(self, dh_next, dy, h_prev, c_prev, x, h, c, dc_next, *args):
         """
         Backward pass of the RNN using BPTT.
         
@@ -115,7 +115,7 @@ class RNN:
         self.dbh+=dbh
         self.dby+=dby
 
-        return  dh_prev
+        return  None,dh_prev,None
 
     def zero_grad(self):
         """

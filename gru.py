@@ -17,6 +17,8 @@ class GRU:
         self.update_gate.zero_grad()
         self.reset_gate.zero_grad()
         self.candidate_gate.zero_grad()
+        self.dWhy=np.zeros_like(self.Why)
+        self.dby=np.zeros_like(self.by)
 
     def forward(self,x,h_prev):
         z_t=self.update_gate.forward(x,h_prev)
@@ -24,18 +26,15 @@ class GRU:
         h_tilde=self.candidate_gate.forward(x,r_t*h_prev)
         h_t=(1-z_t)*h_prev+z_t*h_tilde
         y_t=np.dot(self.Why,h_t)+self.by
-        return h_t,y_t
+        gates=(z_t,r_t,h_tilde)
+        return h_t,y_t,gates
        
 
-    def backward(self,dh_next,dy,h_t,x):
+    def backward(self,dh_next,dy,h_t,x,h_prev,z,r,h_tilde):
 
         dWhy=np.dot(dy,h_t.T)
         dby = np.sum(dy, axis=1, keepdims=True)
         dh = np.dot(self.Why.T, dy) + dh_next
-        x, h_prev, z = self.update_gate.cache
-        _, _, r = self.reset_gate.cache
-        _, _, h_tilde = self.candidate_gate.cache
-
         dz=dh*(-h_prev)+h_tilde*dh
         dh_tilde=dh*z
         dh_prev= dh*(1 - z)
@@ -46,6 +45,30 @@ class GRU:
         dx_r, dh_r, dWr, dUr, dbr=self.reset_gate.backward(dr, 0, 0)
         dx=dx_z+dx_c+dx_r
         dh_prev+=dh_z+dh_r
-        return dx, dh_prev, dWz, dWc, dWr, dUz, dUc, dUr, dbz, dbc, dbr
-        # so what we need to do is basically find the backprop equation after it
-    # has passed through the gates we added above
+        self.dWz+=dWz
+        self.dWc+=dWc
+        self.dWr+=dWr
+        self.dUz+=dUz
+        self.dUc+=dUc    
+        self.dUr+=dUr
+        self.dbz+=dbz
+        self.dbc+=dbc    
+        self.dbr+=dbr
+        self.dWhy+=dWhy
+        self.dby+=dby
+
+        return dx, dh_prev
+  
+    def step(self,learning_rate=0.01):
+        self.update_gate.Wz-=learning_rate*self.dWz
+        self.update_gate.Uz-=learning_rate*self.dUz
+        self.update_gate.bz-=learning_rate*self.dbz
+        self.candidate_gate.Wc-=learning_rate*self.dWc
+        self.candidate_gate.Uc-=learning_rate*self.dUc
+        self.candidate_gate.bc-=learning_rate*self.dbc
+        self.reset_gate.Wr-=learning_rate*self.dWr
+        self.reset_gate.Ur-=learning_rate*self.dUr
+        self.reset_gate.br-=learning_rate*self.dbr
+        self.by-=learning_rate*self.dby
+        self.Why-=learning_rate*self.dWhy
+        self.zero_grad()

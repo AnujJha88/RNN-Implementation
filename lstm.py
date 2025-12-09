@@ -21,6 +21,8 @@ class LSTM:
         self.forget_gate.zero_grad()
         self.candidate_gate.zero_grad()
         self.output_gate.zero_grad()
+        self.dWhy=np.zeros_like(self.Why)
+        self.dby=np.zeros_like(self.by)
 
     def forward(self, x, h_prev, c_prev):
         """
@@ -38,12 +40,13 @@ class LSTM:
         """
         f = self.forget_gate.forward(x, h_prev, c_prev)
         i = self.input_gate.forward(x, h_prev, c_prev)
-        c_tilde = self.candidate_gate.forward(x, h_prev, c_prev)
+        c_tilde = self.candidate_gate.forward(x, h_prev)
         o = self.output_gate.forward(x, h_prev, c_prev)
         c = f * c_prev + i * c_tilde
         h = o * Tanh.forward(c)
         y = np.dot(self.Why, h) + self.by
-        return h, c, y
+        gates=(f,i,o,c_tilde)
+        return h, c, y ,gates
     def backward(self, dh_next, dy, h_prev, c_prev, x, h, c,dc_next,o,i,c_tilde,f):
         dWhy=np.dot(dy,h.T)
         dh=dh_next
@@ -60,3 +63,38 @@ class LSTM:
         dxi,dhi,dWi,dUi,dbi=self.input_gate.backward(di,0,0,0)
         dxc_tilde,dhc_tilde,dWc,dUc,dbc=self.candidate_gate.backward(dc_tilde,0,0)
         dxo,dho,dWo,dUo,dbo=self.output_gate.backward(do,0,0,0)
+
+        dx=dxf+dxi+dxc_tilde+dxo
+        dh_prev=dhf+dhi+dhc_tilde+dho
+        self.dWf+=dWf
+        self.dWi+=dWi
+        self.dWo+=dWo
+        self.dUf+=dUf
+        self.dUi+=dUi
+        self.dUo+=dUo
+        self.dbf+=dbf
+        self.dbi+=dbi
+        self.dbo+=dbo
+        self.dWc+=dWc
+        self.dUc+=dUc
+        self.dbc+=dbc
+        self.dWhy+=dWhy
+        self.dby+=dby
+        return dx,dh_prev,dc_prev
+    
+    def step(self,learning_rate=0.01):
+        self.input_gate.Wi-=learning_rate*self.dWi
+        self.forget_gate.Wf-=learning_rate*self.dWf
+        self.output_gate.Wo-=learning_rate*self.dWo
+        self.candidate_gate.Wc-=learning_rate*self.dWc
+        self.input_gate.Ui-=learning_rate*self.dUi
+        self.forget_gate.Uf-=learning_rate*self.dUf
+        self.output_gate.Uo-=learning_rate*self.dUo
+        self.candidate_gate.Uc-=learning_rate*self.dUc
+        self.forget_gate.bf-=learning_rate*self.dbf
+        self.input_gatebi-=learning_rate*self.dbi
+        self.output_gate.bo-=learning_rate*self.dbo
+        self.candidate_gate.bc-=learning_rate*self.dbc
+        self.by-=learning_rate*self.dby
+        self.Why-=learning_rate*self.dWhy
+        self.zero_grad()

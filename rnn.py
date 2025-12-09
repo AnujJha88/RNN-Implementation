@@ -109,8 +109,13 @@ class RNN:
         
         # Gradient for previous hidden state
         dh_prev = np.dot(self.Whh.T, dtanh)
-        
-        return dWxh, dWhh, dWhy, dbh, dby, dh_prev
+        self.dWxh+=dWxh
+        self.dWhh+=dWhh
+        self.dWhy+=dWhy
+        self.dbh+=dbh
+        self.dby+=dby
+
+        return  dh_prev
 
     def zero_grad(self):
         """

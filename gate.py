@@ -73,7 +73,19 @@ class ForgetGate:  # LSTM
         self.Uf = None
         self.bf = None
         self.cache = None
-
+    def init_weights(self, input_size, hidden_size):
+        """
+        Manually initialize weights. Call this before training!
+        """
+        # Initialize Weights (Xavier)
+        self.Wf = np.random.randn(hidden_size, input_size) * np.sqrt(1 / (hidden_size + input_size))
+        self.Uf = np.random.randn(hidden_size, hidden_size) * np.sqrt(1 / (hidden_size + hidden_size))
+        self.bf = np.zeros(( 1,hidden_size))
+        
+        # Initialize Gradients
+        self.dWf = np.zeros_like(self.Wf)
+        self.dUf = np.zeros_like(self.Uf)
+        self.dbf = np.zeros_like(self.bf)
     def forward(self, x, h_prev, c_prev):
         """
         Forward pass for forget gate
@@ -119,13 +131,13 @@ class ForgetGate:  # LSTM
         dsigma = Sigmoid.backward(f) * (df + dnext_h + dnext_c)
 
         # Compute gradients for parameters
-        dWf = np.dot(dsigma.T, np.hstack([x, h_prev]))
+        dWf = np.dot(dsigma.T, x)
         dUf = np.dot(dsigma.T, h_prev)
         dbf = np.sum(dsigma, axis=0)
 
         # Compute gradients for input and previous hidden state
-        dx = np.dot(dsigma, self.Wf[:, :x.shape[1]])
-        dh_prev = np.dot(dsigma, self.Wf[:, x.shape[1]:])
+        dx = np.dot(dsigma, self.Wf)
+        dh_prev = np.dot(dsigma, self.Uf)
 
         return dx, dh_prev, dWf, dUf, dbf
 
@@ -137,7 +149,19 @@ class InputGate:  # LSTM
         self.Ui = None
         self.bi = None
         self.cache = None
-
+    def init_weights(self, input_size, hidden_size):
+        """
+        Manually initialize weights. Call this before training!
+        """
+        # Initialize Weights (Xavier)
+        self.Wi = np.random.randn(hidden_size, input_size) * np.sqrt(1 / (hidden_size + input_size))
+        self.Ui = np.random.randn(hidden_size, hidden_size) * np.sqrt(1 / (hidden_size + hidden_size))
+        self.bi = np.zeros((1,hidden_size))
+        
+        # Initialize Gradients
+        self.dWi = np.zeros_like(self.Wi)
+        self.dUi = np.zeros_like(self.Ui)
+        self.dbi = np.zeros_like(self.bi)
     def forward(self, x, h_prev, c_prev):
         """
         Forward pass for input gate
@@ -201,6 +225,23 @@ class OutputGate:  # LSTM
         self.Uo = None
         self.bo = None
         self.cache = None
+    def init_weights(self, input_size, hidden_size):
+        """
+        Initialize weights and gradients for the output gate
+        
+        Args:
+            input_size: Size of input dimension
+            hidden_size: Size of hidden state
+        """
+        # Initialize weights using Xavier initialization
+        self.Wo = np.random.randn(hidden_size, input_size) * np.sqrt(1 / (hidden_size + input_size))
+        self.Uo = np.random.randn(hidden_size, hidden_size) * np.sqrt(1 / (hidden_size + hidden_size))
+        self.bo = np.zeros((1,hidden_size))
+        
+        # Initialize gradients
+        self.dWo = np.zeros_like(self.Wo)
+        self.dUo = np.zeros_like(self.Uo)
+        self.dbo = np.zeros_like(self.bo)
 
     def forward(self, x, h_prev, c_prev):
         """
@@ -256,6 +297,7 @@ class OutputGate:  # LSTM
         dh_prev = np.dot(dsigma, self.Uo)
 
         return dx, dh_prev, dWo, dUo, dbo
+    
     def zero_grad(self):
         _zero_grad(self.Wo,self.Uo,self.bo,self.dWo,self.dUo,self.dbo)
 
@@ -265,6 +307,24 @@ class CandidateGate:  # LSTM
         self.Uc = None
         self.bc = None
         self.cache = None
+        
+    def init_weights(self, input_size, hidden_size):
+        """
+        Initialize weights and gradients for the candidate gate
+            
+        Args:
+            input_size: Size of input dimension
+            hidden_size: Size of hidden state
+        """
+        # Initialize weights using Xavier initialization
+        self.Wc = np.random.randn(hidden_size, input_size) * np.sqrt(1 / (hidden_size + input_size))
+        self.Uc = np.random.randn(hidden_size, hidden_size) * np.sqrt(1 / (hidden_size + hidden_size))
+        self.bc = np.zeros((1,hidden_size))
+            
+        # Initialize gradients
+        self.dWc = np.zeros_like(self.Wc)
+        self.dUc = np.zeros_like(self.Uc)
+        self.dbc = np.zeros_like(self.bc)
 
     def forward(self, x, h_prev):
         """
@@ -322,8 +382,9 @@ class CandidateGate:  # LSTM
         dh_prev = np.dot(dtanh, self.Uc)
 
         return dx, dh_prev, dWc, dUc, dbc
+        
     def zero_grad(self):
-        _zero_grad(self.Wc,self.Uc,self.bc,self.dWc,self.dUc,self.dbc)
+        _zero_grad(self.Wc, self.Uc, self.bc, self.dWc, self.dUc, self.dbc)
 
 class UpdateGate:  # GRU
     def __init__(self):
@@ -331,6 +392,24 @@ class UpdateGate:  # GRU
         self.Uz = None
         self.bz = None
         self.cache = None
+        
+    def init_weights(self, input_size, hidden_size):
+        """
+        Initialize weights and gradients for the update gate
+            
+        Args:
+            input_size: Size of input dimension
+            hidden_size: Size of hidden state
+        """
+        # Initialize weights using Xavier initialization
+        self.Wz = np.random.randn(hidden_size, input_size) * np.sqrt(1 / (hidden_size + input_size))
+        self.Uz = np.random.randn(hidden_size, hidden_size) * np.sqrt(1 / (hidden_size + hidden_size))
+        self.bz = np.zeros((1,hidden_size))
+            
+        # Initialize gradients
+        self.dWz = np.zeros_like(self.Wz)
+        self.dUz = np.zeros_like(self.Uz)
+        self.dbz = np.zeros_like(self.bz)
 
     def forward(self, x, h_prev):
         """
@@ -384,14 +463,33 @@ class UpdateGate:  # GRU
         dh_prev = np.dot(dsigma, self.Uz)
 
         return dx, dh_prev, dWz, dUz, dbz
+        
     def zero_grad(self):
-        _zero_grad(self.Wz,self.Uz,self.bz,self.dWz,self.dUz,self.dbz)
+        _zero_grad(self.Wz, self.Uz, self.bz, self.dWz, self.dUz, self.dbz)
 class ResetGate:  # GRU
     def __init__(self):
         self.Wr = None
         self.Ur = None
         self.br = None
         self.cache = None
+        
+    def init_weights(self, input_size, hidden_size):
+        """
+        Initialize weights and gradients for the reset gate
+            
+        Args:
+            input_size: Size of input dimension
+            hidden_size: Size of hidden state
+        """
+        # Initialize weights using Xavier initialization
+        self.Wr = np.random.randn(hidden_size, input_size) * np.sqrt(1 / (hidden_size + input_size))
+        self.Ur = np.random.randn(hidden_size, hidden_size) * np.sqrt(1 / (hidden_size + hidden_size))
+        self.br = np.zeros((1,hidden_size))
+            
+        # Initialize gradients
+        self.dWr = np.zeros_like(self.Wr)
+        self.dUr = np.zeros_like(self.Ur)
+        self.dbr = np.zeros_like(self.br)
 
     def forward(self, x, h_prev):
         """
@@ -447,3 +545,4 @@ class ResetGate:  # GRU
         return dx, dh_prev, dWr, dUr, dbr
     def zero_grad(self):
         _zero_grad(self.Wr,self.Ur,self.br,self.dWr,self.dUr,self.dbr)
+

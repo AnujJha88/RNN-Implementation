@@ -11,6 +11,10 @@ class GRU:
         self.reset_gate=ResetGate()
         self.candidate_gate=CandidateGate()
 
+        self.update_gate.init_weights(input_size, hidden_size)
+        self.reset_gate.init_weights(input_size, hidden_size)
+        self.candidate_gate.init_weights(input_size, hidden_size)
+
         self.Why=np.random.randn(output_size, hidden_size)*np.sqrt(1/(hidden_size+output_size))
         self.by=np.zeros((output_size, 1))
     def zero_grad(self):
@@ -45,30 +49,30 @@ class GRU:
         dx_r, dh_r, dWr, dUr, dbr=self.reset_gate.backward(dr, 0, 0)
         dx=dx_z+dx_c+dx_r
         dh_prev+=dh_z+dh_r
-        self.dWz+=dWz
-        self.dWc+=dWc
-        self.dWr+=dWr
-        self.dUz+=dUz
-        self.dUc+=dUc    
-        self.dUr+=dUr
-        self.dbz+=dbz
-        self.dbc+=dbc    
-        self.dbr+=dbr
+        self.update_gate.dWz+=dWz
+        self.candidate_gate.dWc+=dWc
+        self.reset_gate.dWr+=dWr
+        self.update_gate.dUz+=dUz
+        self.candidate_gate.dUc+=dUc    
+        self.reset_gate.dUr+=dUr
+        self.update_gate.dbz+=dbz
+        self.candidate_gate.dbc+=dbc    
+        self.reset_gate.dbr+=dbr
         self.dWhy+=dWhy
         self.dby+=dby
 
         return dx, dh_prev
   
     def step(self,learning_rate=0.01):
-        self.update_gate.Wz-=learning_rate*self.dWz
-        self.update_gate.Uz-=learning_rate*self.dUz
-        self.update_gate.bz-=learning_rate*self.dbz
-        self.candidate_gate.Wc-=learning_rate*self.dWc
-        self.candidate_gate.Uc-=learning_rate*self.dUc
-        self.candidate_gate.bc-=learning_rate*self.dbc
-        self.reset_gate.Wr-=learning_rate*self.dWr
-        self.reset_gate.Ur-=learning_rate*self.dUr
-        self.reset_gate.br-=learning_rate*self.dbr
+        self.update_gate.Wz-=learning_rate*self.update_gate.dWz
+        self.update_gate.Uz-=learning_rate*self.update_gate.dUz
+        self.update_gate.bz-=learning_rate*self.update_gate.dbz
+        self.candidate_gate.Wc-=learning_rate*self.candidate_gate.dWc
+        self.candidate_gate.Uc-=learning_rate*self.candidate_gate.dUc
+        self.candidate_gate.bc-=learning_rate*self.candidate_gate.dbc
+        self.reset_gate.Wr-=learning_rate*self.reset_gate.dWr
+        self.reset_gate.Ur-=learning_rate*self.reset_gate.dUr
+        self.reset_gate.br-=learning_rate*self.reset_gate.dbr
         self.by-=learning_rate*self.dby
         self.Why-=learning_rate*self.dWhy
         self.zero_grad()

@@ -10,7 +10,7 @@ def make_vocab():
     out={}
     for index,item in enumerate(vocab):
         out[item]=index
-    with open('vocab.py','a') as f:
+    with open('vocab.txt','a') as f:
         f.write('vocab='+str(out))
     return out
 if __name__=="__main__":

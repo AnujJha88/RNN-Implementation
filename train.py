@@ -41,7 +41,7 @@ def train_sentence(indices,model,embed_layer,target):
         f,i,o,c_tilde=gates
         dx,dh_prev,dc_prev=model.backward(dh_next,dy,h_prev,c_prev,x,h,c,dc_next,o,i,c_tilde,f)
         embed_layer.backward(dx,[idx])
-        dy=0
+        dy=np.array([[0]])
         dh_next=dh_prev
         dc_next=dc_prev
     return h,c,y,caches
@@ -60,7 +60,7 @@ def training(epochs):
         
      
 def main():
-    training(epochs=10)
+    training(epochs=100000)
 
 if __name__=="__main__":
     main()

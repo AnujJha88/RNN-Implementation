@@ -11,9 +11,14 @@ class LSTM:
         self.forget_gate=ForgetGate()
         self.candidate_gate=CandidateGate()
         self.output_gate=OutputGate()
-
+        
+        self.input_gate.init_weights(input_size, hidden_size)
+        self.forget_gate.init_weights(input_size, hidden_size)
+        self.candidate_gate.init_weights(input_size, hidden_size)
+        self.output_gate.init_weights(input_size, hidden_size)
+        
         self.Why=np.random.randn(output_size, hidden_size)*np.sqrt(1/(hidden_size+output_size))
-        self.by=np.zeros((output_size, 1))
+        self.by=np.zeros((1,output_size))
 
         self.zero_grad()
     def zero_grad(self):
@@ -44,14 +49,14 @@ class LSTM:
         o = self.output_gate.forward(x, h_prev, c_prev)
         c = f * c_prev + i * c_tilde
         h = o * Tanh.forward(c)
-        y = np.dot(self.Why, h) + self.by
+        y = np.dot(h,self.Why.T) + self.by
         gates=(f,i,o,c_tilde)
         return h, c, y ,gates
     def backward(self, dh_next, dy, h_prev, c_prev, x, h, c,dc_next,o,i,c_tilde,f):
-        dWhy=np.dot(dy,h.T)
+        dWhy=np.dot(dy.T,h)
         dh=dh_next
         dby=np.sum(dy,axis=1,keepdims=True)
-        dh+=np.dot(self.Why.T, dy)
+        dh+=np.dot(dy,self.Why)
         do=dh*Tanh.forward(c)
         dc=dc_next+o*dh*Tanh.backward(c)
         df=dc*c_prev
@@ -66,35 +71,35 @@ class LSTM:
 
         dx=dxf+dxi+dxc_tilde+dxo
         dh_prev=dhf+dhi+dhc_tilde+dho
-        self.dWf+=dWf
-        self.dWi+=dWi
-        self.dWo+=dWo
-        self.dUf+=dUf
-        self.dUi+=dUi
-        self.dUo+=dUo
-        self.dbf+=dbf
-        self.dbi+=dbi
-        self.dbo+=dbo
-        self.dWc+=dWc
-        self.dUc+=dUc
-        self.dbc+=dbc
+        self.forget_gate.dWf+=dWf
+        self.input_gate.dWi+=dWi
+        self.output_gate.dWo+=dWo
+        self.forget_gate.dUf+=dUf
+        self.input_gate.dUi+=dUi
+        self.output_gate.dUo+=dUo
+        self.forget_gate.dbf+=dbf
+        self.input_gate.dbi+=dbi
+        self.output_gate.dbo+=dbo
+        self.candidate_gate.dWc+=dWc
+        self.candidate_gate.dUc+=dUc
+        self.candidate_gate.dbc+=dbc
         self.dWhy+=dWhy
         self.dby+=dby
         return dx,dh_prev,dc_prev
     
     def step(self,learning_rate=0.01):
-        self.input_gate.Wi-=learning_rate*self.dWi
-        self.forget_gate.Wf-=learning_rate*self.dWf
-        self.output_gate.Wo-=learning_rate*self.dWo
-        self.candidate_gate.Wc-=learning_rate*self.dWc
-        self.input_gate.Ui-=learning_rate*self.dUi
-        self.forget_gate.Uf-=learning_rate*self.dUf
-        self.output_gate.Uo-=learning_rate*self.dUo
-        self.candidate_gate.Uc-=learning_rate*self.dUc
-        self.forget_gate.bf-=learning_rate*self.dbf
-        self.input_gatebi-=learning_rate*self.dbi
-        self.output_gate.bo-=learning_rate*self.dbo
-        self.candidate_gate.bc-=learning_rate*self.dbc
+        self.input_gate.Wi-=learning_rate*self.input_gate.dWi
+        self.forget_gate.Wf-=learning_rate*self.forget_gate.dWf
+        self.output_gate.Wo-=learning_rate*self.output_gate.dWo
+        self.candidate_gate.Wc-=learning_rate*self.candidate_gate.dWc
+        self.input_gate.Ui-=learning_rate*self.input_gate.dUi
+        self.forget_gate.Uf-=learning_rate*self.forget_gate.dUf
+        self.output_gate.Uo-=learning_rate*self.output_gate.dUo
+        self.candidate_gate.Uc-=learning_rate*self.candidate_gate.dUc
+        self.forget_gate.bf-=learning_rate*self.forget_gate.dbf
+        self.input_gate.bi-=learning_rate*self.input_gate.dbi
+        self.output_gate.bo-=learning_rate*self.output_gate.dbo
+        self.candidate_gate.bc-=learning_rate*self.candidate_gate.dbc
         self.by-=learning_rate*self.dby
         self.Why-=learning_rate*self.dWhy
         self.zero_grad()

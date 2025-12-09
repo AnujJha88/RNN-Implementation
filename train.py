@@ -59,3 +59,8 @@ def training(epochs):
         embed_layer.step(learning_rate=0.01)
         
      
+def main():
+    training(epochs=10)
+
+if __name__=="__main__":
+    main()

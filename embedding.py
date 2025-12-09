@@ -19,3 +19,4 @@ class EmbedLayer:
     
     def step(self,learning_rate=0.01):
         self.embeddings-=learning_rate*self.dE
+        self.zero_grad()

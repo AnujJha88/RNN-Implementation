@@ -44,5 +44,19 @@ class LSTM:
         h = o * Tanh.forward(c)
         y = np.dot(self.Why, h) + self.by
         return h, c, y
-    def backward(self, dh_next, dy, h_prev, c_prev, x, h, c):
-        
+    def backward(self, dh_next, dy, h_prev, c_prev, x, h, c,dc_next,o,i,c_tilde,f):
+        dWhy=np.dot(dy,h.T)
+        dh=dh_next
+        dby=np.sum(dy,axis=1,keepdims=True)
+        dh+=np.dot(self.Why.T, dy)
+        do=dh*Tanh.forward(c)
+        dc=dc_next+o*dh*Tanh.backward(c)
+        df=dc*c_prev
+        di=dc*c_tilde
+        dc_tilde=dc*i
+        dc_prev=dc*f
+
+        dxf,dhf,dWf,dUf,dbf=self.forget_gate.backward(df,0,0,0)
+        dxi,dhi,dWi,dUi,dbi=self.input_gate.backward(di,0,0,0)
+        dxc_tilde,dhc_tilde,dWc,dUc,dbc=self.candidate_gate.backward(dc_tilde,0,0)
+        dxo,dho,dWo,dUo,dbo=self.output_gate.backward(do,0,0,0)
